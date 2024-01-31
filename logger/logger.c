@@ -88,7 +88,7 @@ static void log_date_update(void)
     
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
-    size_t len = snprintf(log_obj.date_buf, DATE_BUF_SIZE, "%i.%i.%i %i:%i:%i",
+    size_t len = snprintf(log_obj.date_buf, DATE_BUF_SIZE, "%.2i.%.2i.%i %.2i:%.2i:%.2i",
                              tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
     if (len >= DATE_BUF_SIZE) {
         log_write_int_err("LOGGER_ERROR::Date buffer overflow\n");
@@ -107,7 +107,7 @@ static void log_write_std(void) {
 static void log_write_file(void) {
     // TODO: fflush?
     size_t len = strlen(log_obj.message_buf);
-    if (len != fwrite(log_obj.message_buf, len, sizeof(char), log_obj.out_stream)) {
+    if (len != fwrite(log_obj.message_buf, sizeof(char), len, log_obj.out_stream)) {
         log_write_int_err("LOGGER_ERROR::Unable to write to log file\n");
         return;
     }
@@ -186,8 +186,12 @@ logger_error log_init(logger_settings* settings)
         log_write_int_err("LOGGER_WARNING::Empty settings, setting default\n");
         return log_init_default();
     }
-    logger_error err = LOGERR_NOERR;
+    
     log_obj.error_callback = (settings->error_callback == NULL) ? log_error_callback_default : settings->error_callback;
+    logger_error err = log_buffers_init();
+    if (err != LOGERR_NOERR) {
+        return err;
+    }
     
     switch (settings->type) {
         case LOGTYPE_DEBUG:
@@ -220,7 +224,7 @@ logger_error log_init(logger_settings* settings)
             return LOGERR_LOGUNKNOWNOUTTYPE;
     }
     
-    return log_buffers_init();
+    return LOGERR_NOERR;
 }
 
 void log_destruct(void)
@@ -234,11 +238,12 @@ void log_destruct(void)
     free(log_obj.err_message);
     free(log_obj.message_buf);
     free(log_obj.backtrace_buf);
+    memset(&log_obj, 0, sizeof(log_obj));
 }
 
 char* log_get_internal_error(void)
 {
-    return log_obj.message_buf;
+    return log_obj.err_message;
 }
 
 void __log_log(const char* message, logger_level level, const char* file, const char* func, const int line)

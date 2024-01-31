@@ -7,7 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4C5EFB342B699966001D19E4 /* utests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C5EFB332B699966001D19E4 /* utests.m */; };
 		4C7110AA2B603DBC005CB862 /* logger.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C7110A92B603DBC005CB862 /* logger.c */; };
+		4C8A34C62B682003008EF4CA /* demo_main.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C8A34C52B682003008EF4CA /* demo_main.c */; };
+		4C8A34C92B682014008EF4CA /* demo_funcs.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C8A34C82B682014008EF4CA /* demo_funcs.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -23,12 +26,24 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4C5EFB312B699966001D19E4 /* utests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = utests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4C5EFB332B699966001D19E4 /* utests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = utests.m; sourceTree = "<group>"; };
 		4C71109C2B603D79005CB862 /* logger */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = logger; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C7110A82B603DBC005CB862 /* logger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = logger.h; sourceTree = "<group>"; };
 		4C7110A92B603DBC005CB862 /* logger.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = logger.c; sourceTree = "<group>"; };
+		4C8A34C52B682003008EF4CA /* demo_main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = demo_main.c; sourceTree = "<group>"; };
+		4C8A34C72B682014008EF4CA /* demo_funcs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = demo_funcs.h; sourceTree = "<group>"; };
+		4C8A34C82B682014008EF4CA /* demo_funcs.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = demo_funcs.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		4C5EFB2E2B699966001D19E4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4C7110992B603D79005CB862 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -39,10 +54,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		4C5EFB322B699966001D19E4 /* utests */ = {
+			isa = PBXGroup;
+			children = (
+				4C5EFB332B699966001D19E4 /* utests.m */,
+			);
+			path = utests;
+			sourceTree = "<group>";
+		};
 		4C7110932B603D79005CB862 = {
 			isa = PBXGroup;
 			children = (
+				4C8A34BE2B681E94008EF4CA /* example */,
 				4C7110AC2B603EAE005CB862 /* logger */,
+				4C5EFB322B699966001D19E4 /* utests */,
 				4C71109D2B603D79005CB862 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -51,6 +76,7 @@
 			isa = PBXGroup;
 			children = (
 				4C71109C2B603D79005CB862 /* logger */,
+				4C5EFB312B699966001D19E4 /* utests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -64,9 +90,36 @@
 			path = logger;
 			sourceTree = "<group>";
 		};
+		4C8A34BE2B681E94008EF4CA /* example */ = {
+			isa = PBXGroup;
+			children = (
+				4C8A34C52B682003008EF4CA /* demo_main.c */,
+				4C8A34C72B682014008EF4CA /* demo_funcs.h */,
+				4C8A34C82B682014008EF4CA /* demo_funcs.c */,
+			);
+			path = example;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		4C5EFB302B699966001D19E4 /* utests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4C5EFB372B699966001D19E4 /* Build configuration list for PBXNativeTarget "utests" */;
+			buildPhases = (
+				4C5EFB2D2B699966001D19E4 /* Sources */,
+				4C5EFB2E2B699966001D19E4 /* Frameworks */,
+				4C5EFB2F2B699966001D19E4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = utests;
+			productName = utests;
+			productReference = 4C5EFB312B699966001D19E4 /* utests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		4C71109B2B603D79005CB862 /* logger */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 4C7110A32B603D79005CB862 /* Build configuration list for PBXNativeTarget "logger" */;
@@ -93,6 +146,9 @@
 				BuildIndependentTargetsInParallel = 1;
 				LastUpgradeCheck = 1520;
 				TargetAttributes = {
+					4C5EFB302B699966001D19E4 = {
+						CreatedOnToolsVersion = 15.2;
+					};
 					4C71109B2B603D79005CB862 = {
 						CreatedOnToolsVersion = 15.2;
 					};
@@ -112,22 +168,69 @@
 			projectRoot = "";
 			targets = (
 				4C71109B2B603D79005CB862 /* logger */,
+				4C5EFB302B699966001D19E4 /* utests */,
 			);
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		4C5EFB2F2B699966001D19E4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
+		4C5EFB2D2B699966001D19E4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4C5EFB342B699966001D19E4 /* utests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4C7110982B603D79005CB862 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4C8A34C92B682014008EF4CA /* demo_funcs.c in Sources */,
 				4C7110AA2B603DBC005CB862 /* logger.c in Sources */,
+				4C8A34C62B682003008EF4CA /* demo_main.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		4C5EFB352B699966001D19E4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = komarovn654.utests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+			};
+			name = Debug;
+		};
+		4C5EFB362B699966001D19E4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = komarovn654.utests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+			};
+			name = Release;
+		};
 		4C7110A12B603D79005CB862 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -180,12 +283,14 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = /opt/homebrew/Cellar/googletest/1.14.0/include;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
+				new = "";
 			};
 			name = Debug;
 		};
@@ -235,11 +340,14 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = /opt/homebrew/Cellar/googletest/1.14.0/include;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.2;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				SDKROOT = macosx;
+				new = "";
 			};
 			name = Release;
 		};
@@ -262,6 +370,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		4C5EFB372B699966001D19E4 /* Build configuration list for PBXNativeTarget "utests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C5EFB352B699966001D19E4 /* Debug */,
+				4C5EFB362B699966001D19E4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		4C7110972B603D79005CB862 /* Build configuration list for PBXProject "logger" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
