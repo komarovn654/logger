@@ -1,9 +1,14 @@
-#ifndef logger_h
-#define logger_h
+#pragma "once"
 
 #include <stdio.h>
 #include <stdbool.h>
 #include <execinfo.h>
+
+#if (defined(UTEST_BUILD) && UTEST_BUILD == 1)
+    #define log_static
+#else
+    #define log_static static
+#endif
 
 #define LOG_BACKTRACE_BUF_SIZE 128
 
@@ -66,8 +71,6 @@ typedef struct {
     void (*error_callback)(void);
 } logger_settings;
 
-typedef struct logger_src* logger;
-
 logger_error log_init_default(void);
 logger_error log_init(logger_settings* settings);
 void log_destruct(void);
@@ -76,5 +79,3 @@ char* log_get_internal_error(void);
 void* __log_refresh_backtrace_buf(void);
 void __log_log(const char* mes, logger_level level, const char* file, const char* func, const int line);
 void __log_backtrace(bool is_panic, void* buffer, int size);
-
-#endif /* logger_h */

@@ -21,7 +21,7 @@ const char* level_tag[LOGLEVEL_COUNT] = {
     "PANIC"
 };
 
-static struct logger_src {
+log_static struct logger_src {
     logger_output out_type;
     FILE* out_stream;
     
@@ -33,13 +33,17 @@ static struct logger_src {
     void (*error_callback)(void);
 
     void (*writer)(void);
-    void (*message_former)(const char* message, logger_level level, const char* file, const char* func, const int line) ;
+    void (*message_former)(const char* message, logger_level level, const char* file, const char* func, const int line);
 } log_obj;
 
-static void log_error_callback_default(void) {}
+log_static void log_error_callback_default(void) {}
 
-static void log_write_int_err(const char* message, ...)
+log_static void log_write_int_err(const char* message, ...)
 {
+    if (log_obj.err_message == NULL) {
+        return;
+    }
+
     va_list va;
     va_start(va, message);
     vsprintf(log_obj.err_message, message, va);
@@ -48,7 +52,7 @@ static void log_write_int_err(const char* message, ...)
     log_obj.error_callback();
 }
 
-static logger_error log_buffers_init(void)
+log_static logger_error log_buffers_init(void)
 {
     log_obj.err_message = (char*)malloc(INTERR_BUF_SIZE * sizeof(char));
     if (log_obj.err_message == NULL) {
@@ -57,21 +61,21 @@ static logger_error log_buffers_init(void)
 
     log_obj.date_buf = (char*)malloc(DATE_BUF_SIZE * sizeof(char));
     if (log_obj.date_buf == NULL) {
-        log_write_int_err("LOGGER_ERROR::Unable to initialise the internal buffer: date_buf, %ldB\n",
+        log_write_int_err("LOGGER_ERROR::Unable to initialize the internal buffer: date_buf, %ldB\n",
                 DATE_BUF_SIZE * sizeof(char));
         return LOGERR_LOGBUFFINIT;
     }
 
     log_obj.message_buf = (char*)malloc(MESSAGE_BUF_SIZE * sizeof(char));
     if (log_obj.message_buf == NULL) {
-        log_write_int_err("LOGGER_ERROR::Unable to initialise the internal buffer: message_buf, %ldB\n",
+        log_write_int_err("LOGGER_ERROR::Unable to initialize the internal buffer: message_buf, %ldB\n",
                 MESSAGE_BUF_SIZE * sizeof(char));
         return LOGERR_LOGBUFFINIT;
     }
     
     log_obj.backtrace_buf = (char*)malloc(BACKTRACE_BUF_SIZE * sizeof(char));
     if (log_obj.backtrace_buf == NULL) {
-        log_write_int_err("LOGGER_ERROR::Unable to initialise the internal buffer: backtrace_buf, %ldB\n",
+        log_write_int_err("LOGGER_ERROR::Unable to initialize the internal buffer: backtrace_buf, %ldB\n",
                 BACKTRACE_BUF_SIZE * sizeof(char));
         return LOGERR_LOGBUFFINIT;
     }
@@ -79,10 +83,12 @@ static logger_error log_buffers_init(void)
     return LOGERR_NOERR;
 }
 
-static void log_date_update(void)
+log_static void log_date_update(void)
 {
+    printf("here\n");
     if (log_obj.date_buf == NULL) {
-        log_write_int_err("LOGGER_ERROR::Date buffer uninitialised\n");
+        printf("here\n");
+        log_write_int_err("LOGGER_ERROR::Date buffer uninitialized\n");
         return;
     }
     
@@ -96,7 +102,7 @@ static void log_date_update(void)
     }
 }
 
-static void log_write_std(void) {
+log_static void log_write_std(void) {
     size_t len = strlen(log_obj.message_buf);
     if (fprintf(log_obj.out_stream, "%s", log_obj.message_buf) != len) {
         log_write_int_err("LOGGER_ERROR::Unable to write to the stream\n");
@@ -104,7 +110,7 @@ static void log_write_std(void) {
     }
 }
 
-static void log_write_file(void) {
+log_static void log_write_file(void) {
     // TODO: fflush?
     size_t len = strlen(log_obj.message_buf);
     if (len != fwrite(log_obj.message_buf, sizeof(char), len, log_obj.out_stream)) {
@@ -113,7 +119,7 @@ static void log_write_file(void) {
     }
 }
 
-static logger_error log_set_out_file(const char* file_name)
+log_static logger_error log_set_out_file(const char* file_name)
 {
     FILE* f = fopen(file_name, "w");
     if (f == NULL) {
@@ -126,11 +132,11 @@ static logger_error log_set_out_file(const char* file_name)
     return LOGERR_NOERR;
 }
 
-static void log_write_callstack(void* buffer, int size)
+log_static void log_write_callstack(void* buffer, int size)
 {
     char **strings = backtrace_symbols(buffer, size);
     if (strings == NULL) {
-        log_write_int_err("LOGGER_ERROR::Unable to initialise the internal buffer: backtrace_buf, %dB\n", size);
+        log_write_int_err("LOGGER_ERROR::Unable to initialize the internal buffer: backtrace_buf, %dB\n", size);
         return;
     }
 
@@ -148,7 +154,7 @@ void* __log_refresh_backtrace_buf(void)
     return log_obj.backtrace_buf;
 }
 
-static void log_form_debug_message(const char* message, logger_level level, const char* file, const char* func, const int line)
+log_static void log_form_debug_message(const char* message, logger_level level, const char* file, const char* func, const int line)
 {
     log_date_update();
     size_t len = snprintf(log_obj.message_buf, MESSAGE_BUF_SIZE, "%s::%s::%s::%s::%i::%s\n",
@@ -159,7 +165,7 @@ static void log_form_debug_message(const char* message, logger_level level, cons
     }
 }
 
-static void log_form_product_message(const char* message, logger_level level, const char* file, const char* func, const int line)
+log_static void log_form_product_message(const char* message, logger_level level, const char* file, const char* func, const int line)
 {
     log_date_update();
     size_t len = snprintf(log_obj.message_buf, MESSAGE_BUF_SIZE, "%s::%s::%s\n",
@@ -183,8 +189,11 @@ logger_error log_init_default(void)
 logger_error log_init(logger_settings* settings)
 {
     if (settings == NULL) {
-        log_write_int_err("LOGGER_WARNING::Empty settings, setting default\n");
-        return log_init_default();
+        logger_error err = log_init_default();
+        if (err == LOGERR_NOERR) {
+            log_write_int_err("LOGGER_WARNING::Empty settings, setting default\n");
+        }
+        return err;
     }
     
     log_obj.error_callback = (settings->error_callback == NULL) ? log_error_callback_default : settings->error_callback;
@@ -249,7 +258,7 @@ char* log_get_internal_error(void)
 void __log_log(const char* message, logger_level level, const char* file, const char* func, const int line)
 {
     if (log_obj.message_buf == NULL) {
-        log_write_int_err("LOGGER_ERROR::Message buffer uninitialised\n");
+        log_write_int_err("LOGGER_ERROR::Message buffer uninitialized\n");
         return;
     }
 
@@ -260,7 +269,7 @@ void __log_log(const char* message, logger_level level, const char* file, const 
 void __log_backtrace(bool is_panic, void* buffer, int size)
 {
     if (log_obj.message_buf == NULL) {
-        log_write_int_err("LOGGER_ERROR::Message buffer uninitialised\n");
+        log_write_int_err("LOGGER_ERROR::Message buffer uninitialized\n");
         return;
     }
     

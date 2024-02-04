@@ -22,7 +22,7 @@ void mylog_error_callback(void)
 int main(void)
 {
     if (log_init_default() != LOGERR_NOERR) {
-        printf("logger initialisation error\n");
+        printf("Logger initialization error\n");
         return EXIT_FAILURE;
     }
     log_debug("debug message");
@@ -32,11 +32,11 @@ int main(void)
     logger_settings settings= {
         .type = LOGTYPE_PRODUCT,
         .out_type = LOGOUT_FILE,
-        .output.file_name = "/Users/nikolajkomarov/dev/xcode/logger/example/log.log",
+        .output.file_name = "/Users/nikolajkomarov/dev/xcode/logger/examples/log.log",
         .error_callback = mylog_error_callback,
     };
     if (log_init(&settings) != LOGERR_NOERR) {
-        printf("logger initialisation error\n");
+        printf("Logger initialization error\n");
         return EXIT_FAILURE;
     }
     log_debug("debug message");
