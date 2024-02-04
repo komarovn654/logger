@@ -1,6 +1,7 @@
 #pragma "once"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <execinfo.h>
 
@@ -14,9 +15,9 @@
 
 #define __FILENAME__ (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
 
-#define log_log(message) __log_log(message, LOGLEVEL_INFO, __FILENAME__, __func__, __LINE__)
-#define log_debug(message)   __log_log(message, LOGLEVEL_DEBUG, __FILENAME__, __func__, __LINE__)
-#define log_info(message)    __log_log(message, LOGLEVEL_INFO, __FILENAME__, __func__, __LINE__)
+#define log_log(message)     __log_log(message, LOGLEVEL_INFO,    __FILENAME__, __func__, __LINE__)
+#define log_debug(message)   __log_log(message, LOGLEVEL_DEBUG,   __FILENAME__, __func__, __LINE__)
+#define log_info(message)    __log_log(message, LOGLEVEL_INFO,    __FILENAME__, __func__, __LINE__)
 #define log_warning(message) __log_log(message, LOGLEVEL_WARNING, __FILENAME__, __func__, __LINE__)
 #define log_error(message) {\
     __log_log(message, LOGLEVEL_ERROR, __FILENAME__, __func__, __LINE__); \

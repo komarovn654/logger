@@ -9,9 +9,8 @@
 #include "logger.h"
 
 #define DATE_BUF_SIZE      32
-#define MESSAGE_BUF_SIZE   256
-#define INTERR_BUF_SIZE    256
-#define BACKTRACE_BUF_SIZE 256
+#define MESSAGE_BUF_SIZE   512
+#define INTERR_BUF_SIZE    128
 
 const char* level_tag[LOGLEVEL_COUNT] = {
     "DEBUG",
@@ -46,7 +45,7 @@ log_static void log_write_int_err(const char* message, ...)
 
     va_list va;
     va_start(va, message);
-    vsprintf(log_obj.err_message, message, va);
+    vsnprintf(log_obj.err_message, INTERR_BUF_SIZE, message, va);
     va_end(va);
     
     log_obj.error_callback();
@@ -54,40 +53,37 @@ log_static void log_write_int_err(const char* message, ...)
 
 log_static logger_error log_buffers_init(void)
 {
-    log_obj.err_message = (char*)malloc(INTERR_BUF_SIZE * sizeof(char));
+    log_obj.err_message = (char*)malloc(INTERR_BUF_SIZE);
     if (log_obj.err_message == NULL) {
         return LOGERR_LOGBUFFINIT;
     }
 
-    log_obj.date_buf = (char*)malloc(DATE_BUF_SIZE * sizeof(char));
+    log_obj.date_buf = (char*)malloc(DATE_BUF_SIZE);
     if (log_obj.date_buf == NULL) {
         log_write_int_err("LOGGER_ERROR::Unable to initialize the internal buffer: date_buf, %ldB\n",
-                DATE_BUF_SIZE * sizeof(char));
+                DATE_BUF_SIZE);
         return LOGERR_LOGBUFFINIT;
     }
-
-    log_obj.message_buf = (char*)malloc(MESSAGE_BUF_SIZE * sizeof(char));
+ 
+    log_obj.message_buf = (char*)malloc(MESSAGE_BUF_SIZE);
     if (log_obj.message_buf == NULL) {
         log_write_int_err("LOGGER_ERROR::Unable to initialize the internal buffer: message_buf, %ldB\n",
-                MESSAGE_BUF_SIZE * sizeof(char));
+                MESSAGE_BUF_SIZE);
         return LOGERR_LOGBUFFINIT;
     }
     
-    log_obj.backtrace_buf = (char*)malloc(BACKTRACE_BUF_SIZE * sizeof(char));
+    log_obj.backtrace_buf = (char*)malloc(LOG_BACKTRACE_BUF_SIZE);
     if (log_obj.backtrace_buf == NULL) {
         log_write_int_err("LOGGER_ERROR::Unable to initialize the internal buffer: backtrace_buf, %ldB\n",
-                BACKTRACE_BUF_SIZE * sizeof(char));
+                LOG_BACKTRACE_BUF_SIZE);
         return LOGERR_LOGBUFFINIT;
     }
-
     return LOGERR_NOERR;
 }
 
 log_static void log_date_update(void)
 {
-    printf("here\n");
     if (log_obj.date_buf == NULL) {
-        printf("here\n");
         log_write_int_err("LOGGER_ERROR::Date buffer uninitialized\n");
         return;
     }
@@ -140,8 +136,14 @@ log_static void log_write_callstack(void* buffer, int size)
         return;
     }
 
+    size_t left_space = MESSAGE_BUF_SIZE;
     for (int i = 0, j = 0; i < size; i++) {
-        sprintf(&log_obj.message_buf[j], "%s\n", strings[i]);
+        int len = snprintf(&log_obj.message_buf[j], left_space, "%s\n", strings[i]);
+        if (len >= left_space) {
+            log_write_int_err("LOGGER_ERROR::Message buffer overflow\n");
+            return;
+        }
+        left_space -= len;
         j += strlen(strings[i]) + 1;
     }
 
@@ -150,7 +152,7 @@ log_static void log_write_callstack(void* buffer, int size)
 
 void* __log_refresh_backtrace_buf(void)
 {
-    memset(log_obj.backtrace_buf, 0, BACKTRACE_BUF_SIZE);
+    memset(log_obj.backtrace_buf, 0, LOG_BACKTRACE_BUF_SIZE);
     return log_obj.backtrace_buf;
 }
 
@@ -201,7 +203,7 @@ logger_error log_init(logger_settings* settings)
     if (err != LOGERR_NOERR) {
         return err;
     }
-    
+
     switch (settings->type) {
         case LOGTYPE_DEBUG:
             log_obj.message_former = log_form_debug_message;
@@ -243,6 +245,7 @@ void log_destruct(void)
             log_write_int_err("LOGGER_ERROR::Unable to close log file\n");
         }
     }
+    
     free(log_obj.date_buf);
     free(log_obj.err_message);
     free(log_obj.message_buf);
