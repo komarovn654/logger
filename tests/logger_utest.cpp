@@ -34,15 +34,15 @@ const char* test_log_file = "log.txt";
 class TestLoggerFix : public ::testing::Test
 {
 protected:
-	void SetUp()
-	{
+    void SetUp()
+    {
         log_buffers_init();
         log_obj.error_callback = log_error_callback_default;
-	}
-	void TearDown()
-	{
-		log_destruct();
-	}
+    }
+    void TearDown()
+    {
+        log_destruct();
+    }
 };
 
 TEST_F(TestLoggerFix, InternalBuffersInit) 
