@@ -16,6 +16,7 @@ enable_testing()
 add_executable(
     hello_test
     logger_utest.cpp
+    logger_mtest.cpp
     ${log_sources}
 )
 

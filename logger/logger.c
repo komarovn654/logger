@@ -9,7 +9,7 @@
 #include "logger.h"
 
 #define DATE_BUF_SIZE      32
-#define MESSAGE_BUF_SIZE   512
+#define MESSAGE_BUF_SIZE   2048
 #define INTERR_BUF_SIZE    128
 
 const char* level_tag[LOGLEVEL_COUNT] = {
@@ -48,7 +48,14 @@ log_static void log_write_int_err(const char* message, ...)
     vsnprintf(log_obj.err_message, INTERR_BUF_SIZE, message, va);
     va_end(va);
     
-    log_obj.error_callback();
+    if (log_obj.error_callback != NULL) {
+        log_obj.error_callback();
+    }
+}
+
+char* log_get_internal_error(void)
+{
+    return log_obj.err_message;
 }
 
 log_static logger_error log_buffers_init(void)
@@ -72,7 +79,7 @@ log_static logger_error log_buffers_init(void)
         return LOGERR_LOGBUFFINIT;
     }
     
-    log_obj.backtrace_buf = (char*)malloc(LOG_BACKTRACE_BUF_SIZE);
+    log_obj.backtrace_buf = malloc(LOG_BACKTRACE_BUF_SIZE);
     if (log_obj.backtrace_buf == NULL) {
         log_write_int_err("LOGGER_ERROR::Unable to initialize the internal buffer: backtrace_buf, %ldB\n",
                 LOG_BACKTRACE_BUF_SIZE);
@@ -251,11 +258,6 @@ void log_destruct(void)
     free(log_obj.message_buf);
     free(log_obj.backtrace_buf);
     memset(&log_obj, 0, sizeof(log_obj));
-}
-
-char* log_get_internal_error(void)
-{
-    return log_obj.err_message;
 }
 
 void __log_log(const char* message, logger_level level, const char* file, const char* func, const int line)
