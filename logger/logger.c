@@ -176,6 +176,10 @@ log_static void log_form_debug_message(const char* message, logger_level level, 
 
 log_static void log_form_product_message(const char* message, logger_level level, const char* file, const char* func, const int line)
 {
+    if (level <= LOGLEVEL_DEBUG) {
+        return;
+    }
+
     log_date_update();
     size_t len = snprintf(log_obj.message_buf, MESSAGE_BUF_SIZE, "%s::%s::%s\n",
              log_obj.date_buf, level_tag[level], message);
