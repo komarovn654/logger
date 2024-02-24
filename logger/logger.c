@@ -12,6 +12,8 @@
 #define MESSAGE_BUF_SIZE   2048
 #define INTERR_BUF_SIZE    128
 
+#define assert_len(len, max) if (len >= max) goto err;
+
 const char* level_tag[LOGLEVEL_COUNT] = {
     "DEBUG",
     "INFO",
@@ -32,7 +34,8 @@ log_static struct logger_src {
     void (*error_callback)(void);
 
     void (*writer)(void);
-    void (*message_former)(const char* message, logger_level level, const char* file, const char* func, const int line);
+    void (*message_former)(logger_level level, const char* file, const char* func, const int line, 
+        const char* message, va_list va);
 } log_obj;
 
 log_static void log_error_callback_default(void) {}
@@ -163,30 +166,43 @@ void* __log_refresh_backtrace_buf(void)
     return log_obj.backtrace_buf;
 }
 
-log_static void log_form_debug_message(const char* message, logger_level level, const char* file, const char* func, const int line)
+log_static void log_form_debug_message(logger_level level, const char* file, const char* func, const int line, 
+    const char* message, va_list va)
 {
     log_date_update();
-    size_t len = snprintf(log_obj.message_buf, MESSAGE_BUF_SIZE, "%s::%s::%s::%s::%i::%s\n",
-                             log_obj.date_buf, level_tag[level], file, func, line, message);
-    if (len >= MESSAGE_BUF_SIZE) {
-        log_write_int_err("LOGGER_ERROR::Message buffer overflow\n");
-        return;
-    }
+    size_t len = snprintf(log_obj.message_buf, MESSAGE_BUF_SIZE, "%s::%s::%s::%s::%i::",
+                             log_obj.date_buf, level_tag[level], file, func, line);
+    assert_len(len, MESSAGE_BUF_SIZE);
+
+    size_t max_len = MESSAGE_BUF_SIZE - len;
+    size_t mes_len = vsnprintf(&log_obj.message_buf[len], max_len, message, va);
+    log_obj.message_buf[len + mes_len] = '\n';
+    assert_len(len, max_len);
+    return;
+
+    err:
+    log_write_int_err("LOGGER_ERROR::Message buffer overflow\n");
 }
 
-log_static void log_form_product_message(const char* message, logger_level level, const char* file, const char* func, const int line)
+log_static void log_form_product_message(logger_level level, const char* file, const char* func, const int line, 
+    const char* message, va_list va)
 {
     if (level <= LOGLEVEL_DEBUG) {
         return;
     }
 
     log_date_update();
-    size_t len = snprintf(log_obj.message_buf, MESSAGE_BUF_SIZE, "%s::%s::%s\n",
-             log_obj.date_buf, level_tag[level], message);
-    if (len >= MESSAGE_BUF_SIZE) {
-        log_write_int_err("LOGGER_ERROR::Message buffer overflow\n");
-        return;
-    }
+    size_t len = snprintf(log_obj.message_buf, MESSAGE_BUF_SIZE, "%s::%s::", log_obj.date_buf, level_tag[level]);
+    assert_len(len, MESSAGE_BUF_SIZE);
+
+    size_t max_len = MESSAGE_BUF_SIZE - len;
+    size_t mes_len = vsnprintf(&log_obj.message_buf[len], max_len, message, va);
+    log_obj.message_buf[len + mes_len] = '\n';
+    assert_len(len, max_len);
+    return;
+
+    err:
+    log_write_int_err("LOGGER_ERROR::Message buffer overflow\n");
 }
 
 logger_error log_init_default(void)
@@ -264,15 +280,18 @@ void log_destruct(void)
     memset(&log_obj, 0, sizeof(log_obj));
 }
 
-void __log_log(const char* message, logger_level level, const char* file, const char* func, const int line)
+void __log_log(logger_level level, const char* file, const char* func, const int line, const char* message, ...)
 {
     if (log_obj.message_buf == NULL) {
         log_write_int_err("LOGGER_ERROR::Message buffer uninitialized\n");
         return;
     }
 
-    log_obj.message_former(message, level, file, func, line);
+    va_list va;
+    va_start(va, message);
+    log_obj.message_former(level, file, func, line, message, va);
     log_obj.writer();
+    va_end(va);
 }
 
 void __log_backtrace(bool is_panic, void* buffer, int size)

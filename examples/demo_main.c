@@ -25,22 +25,22 @@ int main(void)
         printf("Logger initialization error\n");
         return EXIT_FAILURE;
     }
-    log_debug("debug message");
+    log_debug("debug message %u %lu", 12246, 12535);
     func_1();
     log_destruct();
     
     logger_settings settings= {
         .type = LOGTYPE_PRODUCT,
         .out_type = LOGOUT_FILE,
-        .output.file_name = "/Users/nikolajkomarov/dev/xcode/logger/examples/log.log",
+        .output.file_name = "log.log",
         .error_callback = mylog_error_callback,
     };
     if (log_init(&settings) != LOGERR_NOERR) {
         printf("Logger initialization error\n");
         return EXIT_FAILURE;
     }
-    log_debug("debug message");
+    log_debug("debug message %d", 123);
     func_1();
-    log_panic("panic message");
+    // log_panic("panic message");
     log_info("unreachable message");
 }

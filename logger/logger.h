@@ -1,5 +1,6 @@
 #pragma "once"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -15,15 +16,10 @@
 
 #define __FILENAME__ (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
 
-#define log_debug(message)   __log_log(message, LOGLEVEL_DEBUG,   __FILENAME__, __func__, __LINE__)
-#define log_info(message)    __log_log(message, LOGLEVEL_INFO,    __FILENAME__, __func__, __LINE__)
-#define log_warning(message) __log_log(message, LOGLEVEL_WARNING, __FILENAME__, __func__, __LINE__)
-#define log_error(message) {\
-    __log_log(message, LOGLEVEL_ERROR, __FILENAME__, __func__, __LINE__); \
-    void* buffer = __log_refresh_backtrace_buf();\
-    int size = backtrace((void **)buffer, LOG_BACKTRACE_BUF_SIZE);\
-    __log_backtrace(false, buffer, size);\
-}
+#define log_debug(...)   __log_log(LOGLEVEL_DEBUG,   __FILENAME__, __func__, __LINE__, __VA_ARGS__)
+#define log_info(...)    __log_log(LOGLEVEL_INFO,    __FILENAME__, __func__, __LINE__, __VA_ARGS__)
+#define log_warning(...) __log_log(LOGLEVEL_WARNING, __FILENAME__, __func__, __LINE__, __VA_ARGS__)
+#define log_error(...)   __log_log(LOGLEVEL_ERROR,   __FILENAME__, __func__, __LINE__, __VA_ARGS__)
 #define log_panic(message) {\
     __log_log(message, LOGLEVEL_PANIC, __FILENAME__, __func__, __LINE__); \
     void* buffer = __log_refresh_backtrace_buf();\
@@ -77,5 +73,5 @@ void log_destruct(void);
 char* log_get_internal_error(void);
 
 void* __log_refresh_backtrace_buf(void);
-void __log_log(const char* mes, logger_level level, const char* file, const char* func, const int line);
+void __log_log(logger_level level, const char* file, const char* func, const int line, const char* mes, ...);
 void __log_backtrace(bool is_panic, void* buffer, int size);
