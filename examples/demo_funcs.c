@@ -3,5 +3,5 @@
 
 void ext_func_1(void)
 {
-    log_error("error message");
+    log_error("error message %s %d", "error", 43);
 }

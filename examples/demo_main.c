@@ -10,7 +10,7 @@ static void func_2(void)
 
 static void func_1(void)
 {
-    log_info("info message");
+    log_info("info message: %s %d", "info message", 94);
     func_2();
 }
 
@@ -25,7 +25,7 @@ int main(void)
         printf("Logger initialization error\n");
         return EXIT_FAILURE;
     }
-    log_debug("debug message %u %lu", 12246, 12535);
+    log_debug("debug message: %s %lu", "stderr message", 12535);
     func_1();
     log_destruct();
     
@@ -39,8 +39,8 @@ int main(void)
         printf("Logger initialization error\n");
         return EXIT_FAILURE;
     }
-    log_debug("debug message %d", 123);
+    log_debug("debug message");
     func_1();
-    // log_panic("panic message");
+    log_panic("panic message");
     log_info("unreachable message");
 }

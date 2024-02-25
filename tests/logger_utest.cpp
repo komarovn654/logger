@@ -14,19 +14,22 @@ extern "C" {
         char* err_message;
         void (*error_callback)(void);
 
-        void (*writer)(void);
-        void (*message_former)(const char* message, logger_level level, const char* file, const char* func, const int line);
+        void (*writer)(char *buf);
+        void (*message_former)(logger_level level, const char* file, const char* func, const int line, 
+            const char* message, va_list va);
     } log_obj;
     extern logger_error log_buffers_init(void);
-    extern void log_write_std(void);
-    extern void log_write_file(void);
+    extern void log_write_std(char *buf);
+    extern void log_write_file(char *buf);
     extern void log_error_callback_default(void);
-    extern void log_form_debug_message(const char* message, logger_level level, const char* file, const char* func, const int line);
+    extern void log_form_debug_message(logger_level level, const char* file, const char* func, const int line, 
+        const char* message, va_list va);
     extern void log_date_update(void);
     extern void log_error_callback_default(void);
     extern void log_write_int_err(const char* message, ...);
     extern logger_error log_set_out_file(const char* file_name);
-    extern void log_form_product_message(const char* message, logger_level level, const char* file, const char* func, const int line);
+    extern void log_form_product_message(logger_level level, const char* file, const char* func, const int line, 
+        const char* message, va_list va);
 }
 
 const char* test_log_file = "log.txt";
@@ -102,7 +105,7 @@ TEST_F(TestLoggerFix, WriteFile)
     FILE* f = fopen(test_log_file, "w");
     log_obj.out_stream = f;
     snprintf(log_obj.message_buf, 32, test_string);
-    log_write_file();
+    log_write_file(log_obj.message_buf);
     fclose(f);
 
     f = fopen(test_log_file, "r");
@@ -143,7 +146,8 @@ TEST_F(TestLoggerFix, FormDebugMessage)
     snprintf(expect, 256, "%s::%s::%s::%s::%i::%s\n", log_obj.date_buf, 
         "INFO", "file", "func", 3, "message");
 
-    log_form_debug_message("message", LOGLEVEL_INFO, "file", "func", 3);
+    va_list va;
+    log_form_debug_message(LOGLEVEL_INFO, "file", "func", 3, "message", va);
     EXPECT_STREQ(expect, log_obj.message_buf);
 }
 
@@ -152,7 +156,8 @@ TEST_F(TestLoggerFix, FormDebugMessageErr)
     char overflow[2049] = { 0 };
     memset(overflow, 1, 2049);
 
-    log_form_debug_message(overflow, LOGLEVEL_INFO, "file", "func", 3);
+    va_list va;
+    log_form_debug_message(LOGLEVEL_INFO, "file", "func", 3, overflow, va);
     EXPECT_STREQ("LOGGER_ERROR::Message buffer overflow\n", log_obj.err_message);
 }
 
@@ -162,7 +167,8 @@ TEST_F(TestLoggerFix, FormProductMessage)
     log_date_update();
     snprintf(expect, 256, "%s::%s::%s\n", log_obj.date_buf, "INFO", "message");
 
-    log_form_product_message("message", LOGLEVEL_INFO, "file", "func", 3);
+    va_list va;
+    log_form_product_message(LOGLEVEL_INFO, "file", "func", 3, "message", va);
     EXPECT_STREQ(expect, log_obj.message_buf);
 }
 
@@ -171,7 +177,8 @@ TEST_F(TestLoggerFix, FormProductMessageErr)
     char overflow[2049] = { 0 };
     memset(overflow, 1, 2049);
 
-    log_form_product_message(overflow, LOGLEVEL_INFO, "file", "func", 3);
+    va_list va;
+    log_form_product_message(LOGLEVEL_INFO, "file", "func", 3, overflow, va);
     EXPECT_STREQ("LOGGER_ERROR::Message buffer overflow\n", log_obj.err_message);
 }
 
@@ -259,7 +266,7 @@ TEST_F(TestLoggerFix, Log)
     int len = snprintf(expect, 256, "%s::%s::%s::%s::%i::%s\n", log_obj.date_buf, 
         "INFO", "file", "func", 2, "message");
     
-    __log_log("message", LOGLEVEL_INFO, "file", "func", 2);
+    __log_log(LOGLEVEL_INFO, "file", "func", 2, "message");
     fclose(log_obj.out_stream);
 
     char buf[256];
@@ -274,7 +281,7 @@ TEST_F(TestLoggerFix, Log)
 TEST(TestLogger, LogErr)
 {
     log_obj.err_message = new(char[256]);
-    __log_log("message", LOGLEVEL_INFO, "file", "func", 2);
+    __log_log(LOGLEVEL_INFO, "file", "func", 2, "message");
     EXPECT_STREQ(log_get_internal_error(), "LOGGER_ERROR::Message buffer uninitialized\n");
     delete(log_obj.err_message);
 }

@@ -20,11 +20,11 @@
 #define log_info(...)    __log_log(LOGLEVEL_INFO,    __FILENAME__, __func__, __LINE__, __VA_ARGS__)
 #define log_warning(...) __log_log(LOGLEVEL_WARNING, __FILENAME__, __func__, __LINE__, __VA_ARGS__)
 #define log_error(...)   __log_log(LOGLEVEL_ERROR,   __FILENAME__, __func__, __LINE__, __VA_ARGS__)
-#define log_panic(message) {\
-    __log_log(message, LOGLEVEL_PANIC, __FILENAME__, __func__, __LINE__); \
+#define log_panic(...) {\
+    __log_log(LOGLEVEL_PANIC, __FILENAME__, __func__, __LINE__, __VA_ARGS__);\
     void* buffer = __log_refresh_backtrace_buf();\
     int size = backtrace((void **)buffer, LOG_BACKTRACE_BUF_SIZE);\
-    __log_backtrace(true, buffer, size);\
+    __log_backtrace(buffer, size);\
 }
 
 typedef enum {
@@ -55,6 +55,7 @@ typedef enum {
     LOGERR_LOGBUFFINIT,
     LOGERR_LOGUNKNOWNTYPE,
     LOGERR_LOGUNKNOWNOUTTYPE,
+    LOGERR_LOGBUFOVERFLOW,
 } logger_error;
 
 typedef struct {
@@ -74,4 +75,4 @@ char* log_get_internal_error(void);
 
 void* __log_refresh_backtrace_buf(void);
 void __log_log(logger_level level, const char* file, const char* func, const int line, const char* mes, ...);
-void __log_backtrace(bool is_panic, void* buffer, int size);
+void __log_backtrace(void* buffer, int size);

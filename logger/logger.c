@@ -9,7 +9,8 @@
 #include "logger.h"
 
 #define DATE_BUF_SIZE      32
-#define MESSAGE_BUF_SIZE   2048
+#define MESSAGE_BUF_SIZE   512
+#define CALLSTACK_BUF_SIZE 2048
 #define INTERR_BUF_SIZE    128
 
 #define assert_len(len, max) if (len >= max) goto err;
@@ -33,7 +34,7 @@ log_static struct logger_src {
     char* err_message;
     void (*error_callback)(void);
 
-    void (*writer)(void);
+    void (*writer)(char *buf);
     void (*message_former)(logger_level level, const char* file, const char* func, const int line, 
         const char* message, va_list va);
 } log_obj;
@@ -63,26 +64,26 @@ char* log_get_internal_error(void)
 
 log_static logger_error log_buffers_init(void)
 {
-    log_obj.err_message = (char*)malloc(INTERR_BUF_SIZE);
+    log_obj.err_message = (char*)calloc(INTERR_BUF_SIZE, sizeof(char));
     if (log_obj.err_message == NULL) {
         return LOGERR_LOGBUFFINIT;
     }
 
-    log_obj.date_buf = (char*)malloc(DATE_BUF_SIZE);
+    log_obj.date_buf = (char*)calloc(DATE_BUF_SIZE, sizeof(char));
     if (log_obj.date_buf == NULL) {
         log_write_int_err("LOGGER_ERROR::Unable to initialize the internal buffer: date_buf, %ldB\n",
                 DATE_BUF_SIZE);
         return LOGERR_LOGBUFFINIT;
     }
  
-    log_obj.message_buf = (char*)malloc(MESSAGE_BUF_SIZE);
+    log_obj.message_buf = (char*)calloc(MESSAGE_BUF_SIZE, sizeof(char));
     if (log_obj.message_buf == NULL) {
         log_write_int_err("LOGGER_ERROR::Unable to initialize the internal buffer: message_buf, %ldB\n",
                 MESSAGE_BUF_SIZE);
         return LOGERR_LOGBUFFINIT;
     }
     
-    log_obj.backtrace_buf = malloc(LOG_BACKTRACE_BUF_SIZE);
+    log_obj.backtrace_buf = calloc(LOG_BACKTRACE_BUF_SIZE, sizeof(char));
     if (log_obj.backtrace_buf == NULL) {
         log_write_int_err("LOGGER_ERROR::Unable to initialize the internal buffer: backtrace_buf, %ldB\n",
                 LOG_BACKTRACE_BUF_SIZE);
@@ -108,18 +109,18 @@ log_static void log_date_update(void)
     }
 }
 
-log_static void log_write_std(void) {
-    size_t len = strlen(log_obj.message_buf);
-    if (fprintf(log_obj.out_stream, "%s", log_obj.message_buf) != len) {
+log_static void log_write_std(char *buf) {
+    size_t len = strlen(buf);
+    if (fprintf(log_obj.out_stream, "%s", buf) != len) {
         log_write_int_err("LOGGER_ERROR::Unable to write to the stream\n");
         return;
     }
 }
 
-log_static void log_write_file(void) {
+log_static void log_write_file(char *buf) {
     // TODO: fflush?
-    size_t len = strlen(log_obj.message_buf);
-    if (len != fwrite(log_obj.message_buf, sizeof(char), len, log_obj.out_stream)) {
+    size_t len = strlen(buf);
+    if (len != fwrite(buf, sizeof(char), len, log_obj.out_stream)) {
         log_write_int_err("LOGGER_ERROR::Unable to write to log file\n");
         return;
     }
@@ -138,32 +139,23 @@ log_static logger_error log_set_out_file(const char* file_name)
     return LOGERR_NOERR;
 }
 
-log_static void log_write_callstack(void* buffer, int size)
-{
-    char **strings = backtrace_symbols(buffer, size);
-    if (strings == NULL) {
-        log_write_int_err("LOGGER_ERROR::Unable to initialize the internal buffer: backtrace_buf, %dB\n", size);
-        return;
-    }
-
-    size_t left_space = MESSAGE_BUF_SIZE;
-    for (int i = 0, j = 0; i < size; i++) {
-        int len = snprintf(&log_obj.message_buf[j], left_space, "%s\n", strings[i]);
-        if (len >= left_space) {
-            log_write_int_err("LOGGER_ERROR::Message buffer overflow\n");
-            return;
-        }
-        left_space -= len;
-        j += strlen(strings[i]) + 1;
-    }
-
-    free(strings);
-}
-
 void* __log_refresh_backtrace_buf(void)
 {
     memset(log_obj.backtrace_buf, 0, LOG_BACKTRACE_BUF_SIZE);
     return log_obj.backtrace_buf;
+}
+
+log_static logger_error log_form_message_core(size_t start, const char* message, va_list va)
+{
+    size_t max_len = MESSAGE_BUF_SIZE - start;
+    size_t mes_len = vsnprintf(&log_obj.message_buf[start], max_len, message, va);
+    log_obj.message_buf[start + mes_len] = '\n';
+    log_obj.message_buf[start + mes_len + 1] = '\0';
+    assert_len(mes_len, max_len);
+    return LOGERR_NOERR;
+
+    err:
+    return LOGERR_LOGBUFOVERFLOW;   
 }
 
 log_static void log_form_debug_message(logger_level level, const char* file, const char* func, const int line, 
@@ -174,11 +166,9 @@ log_static void log_form_debug_message(logger_level level, const char* file, con
                              log_obj.date_buf, level_tag[level], file, func, line);
     assert_len(len, MESSAGE_BUF_SIZE);
 
-    size_t max_len = MESSAGE_BUF_SIZE - len;
-    size_t mes_len = vsnprintf(&log_obj.message_buf[len], max_len, message, va);
-    log_obj.message_buf[len + mes_len] = '\n';
-    assert_len(len, max_len);
-    return;
+    if (log_form_message_core(len, message, va) == LOGERR_NOERR) {
+        return;
+    }
 
     err:
     log_write_int_err("LOGGER_ERROR::Message buffer overflow\n");
@@ -195,11 +185,9 @@ log_static void log_form_product_message(logger_level level, const char* file, c
     size_t len = snprintf(log_obj.message_buf, MESSAGE_BUF_SIZE, "%s::%s::", log_obj.date_buf, level_tag[level]);
     assert_len(len, MESSAGE_BUF_SIZE);
 
-    size_t max_len = MESSAGE_BUF_SIZE - len;
-    size_t mes_len = vsnprintf(&log_obj.message_buf[len], max_len, message, va);
-    log_obj.message_buf[len + mes_len] = '\n';
-    assert_len(len, max_len);
-    return;
+    if (log_form_message_core(len, message, va) == LOGERR_NOERR) {
+        return;
+    }
 
     err:
     log_write_int_err("LOGGER_ERROR::Message buffer overflow\n");
@@ -290,18 +278,43 @@ void __log_log(logger_level level, const char* file, const char* func, const int
     va_list va;
     va_start(va, message);
     log_obj.message_former(level, file, func, line, message, va);
-    log_obj.writer();
+    log_obj.writer(log_obj.message_buf);
     va_end(va);
 }
 
-void __log_backtrace(bool is_panic, void* buffer, int size)
+log_static void log_write_callstack(void* buffer, int size)
+{
+    char **strings = backtrace_symbols(buffer, size);
+    if (strings == NULL) {
+        log_write_int_err("LOGGER_ERROR::Unable to initialize the internal buffer: backtrace_buf, %dB\n", size);
+        return;
+    }
+
+    char *callstack_buf = (char *)malloc(CALLSTACK_BUF_SIZE);
+    size_t left_space = CALLSTACK_BUF_SIZE;
+    for (int i = 0, j = 0; i < size; i++) {
+        int len = snprintf(callstack_buf, left_space, "%s\n", strings[i]);
+        if (len >= left_space) {
+            log_write_int_err("LOGGER_ERROR::Callstack buffer overflow\n");
+            goto del;
+        }
+        left_space -= len;
+        j += strlen(strings[i]) + 1;
+    }
+    log_obj.writer(callstack_buf);
+
+    del:
+    free(strings);
+    free(callstack_buf);
+}
+
+void __log_backtrace(void* buffer, int size)
 {
     if (log_obj.message_buf == NULL) {
         log_write_int_err("LOGGER_ERROR::Message buffer uninitialized\n");
         return;
     }
-    
     log_write_callstack(buffer, size);
-    log_obj.writer();
-    if (is_panic) exit(EXIT_FAILURE);
+    
+    exit(EXIT_FAILURE);
 }
