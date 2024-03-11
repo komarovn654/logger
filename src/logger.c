@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <time.h>
 
-#include "logger.h"
+#include "../include/logger/logger.h"
 
 #define DATE_BUF_SIZE      32
 #define MESSAGE_BUF_SIZE   512
