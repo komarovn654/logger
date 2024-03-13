@@ -12,8 +12,6 @@
 #define MESSAGE_BUF_SIZE   512
 #define INTERR_BUF_SIZE    128
 
-#define assert_len(len, max) if (len >= max) goto err;
-
 typedef struct logman_src {
     logman_output out_type;
     FILE* out_stream;

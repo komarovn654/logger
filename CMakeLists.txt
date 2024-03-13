@@ -26,8 +26,6 @@ endif()
 
 set(LOGMAN_SOURCES ${PROJECT_SOURCE_DIR}/src/logman.c)
 
-message(PATHE: ${PROJECT_SOURCE_DIR})
-
 #--------------------------------------------------------------------
 # Add subdirectories
 #--------------------------------------------------------------------

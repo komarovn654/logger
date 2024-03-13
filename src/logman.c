@@ -16,11 +16,6 @@ const char* level_tag[LOGLEVEL_COUNT] = {
 
 log_static logman_src log_obj;
 
-logman_src* __log_get_log_obj(void)
-{
-    return &log_obj;
-}
-
 log_static void log_error_callback_default(void) {}
 
 log_static void log_write_int_err(const char* message, ...)
@@ -53,14 +48,14 @@ log_static logman_error log_buffers_init(void)
 
     log_obj.date_buf = (char*)calloc(DATE_BUF_SIZE, sizeof(char));
     if (log_obj.date_buf == NULL) {
-        log_write_int_err("logman_ERROR::Unable to initialize the internal buffer: date_buf, %ldB\n",
+        log_write_int_err("LOGMAN_ERROR::Unable to initialize the internal buffer: date_buf, %ldB\n",
                 DATE_BUF_SIZE);
         return LOGERR_LOGBUFFINIT;
     }
  
     log_obj.message_buf = (char*)calloc(MESSAGE_BUF_SIZE, sizeof(char));
     if (log_obj.message_buf == NULL) {
-        log_write_int_err("logman_ERROR::Unable to initialize the internal buffer: message_buf, %ldB\n",
+        log_write_int_err("LOGMAN_ERROR::Unable to initialize the internal buffer: message_buf, %ldB\n",
                 MESSAGE_BUF_SIZE);
         return LOGERR_LOGBUFFINIT;
     }
@@ -71,7 +66,7 @@ log_static logman_error log_buffers_init(void)
 log_static void log_date_update(void)
 {
     if (log_obj.date_buf == NULL) {
-        log_write_int_err("logman_ERROR::Date buffer uninitialized\n");
+        log_write_int_err("LOGMAN_ERROR::Date buffer uninitialized\n");
         return;
     }
     
@@ -80,7 +75,7 @@ log_static void log_date_update(void)
     size_t len = snprintf(log_obj.date_buf, DATE_BUF_SIZE, "%.2i.%.2i.%i %.2i:%.2i:%.2i",
                              tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
     if (len >= DATE_BUF_SIZE) {
-        log_write_int_err("logman_ERROR::Date buffer overflow\n");
+        log_write_int_err("LOGMAN_ERROR::Date buffer overflow\n");
         return;
     }
 }
@@ -88,7 +83,7 @@ log_static void log_date_update(void)
 log_static void log_write_std(char *buf) {
     size_t len = strlen(buf);
     if (fprintf(log_obj.out_stream, "%s", buf) != len) {
-        log_write_int_err("logman_ERROR::Unable to write to the stream\n");
+        log_write_int_err("LOGMAN_ERROR::Unable to write to the stream\n");
         return;
     }
 }
@@ -97,7 +92,7 @@ log_static void log_write_file(char *buf) {
     // TODO: fflush?
     size_t len = strlen(buf);
     if (len != fwrite(buf, sizeof(char), len, log_obj.out_stream)) {
-        log_write_int_err("logman_ERROR::Unable to write to log file\n");
+        log_write_int_err("LOGMAN_ERROR::Unable to write to log file\n");
         return;
     }
 }
@@ -106,7 +101,7 @@ log_static logman_error log_set_out_file(const char* file_name)
 {
     FILE* f = fopen(file_name, "w");
     if (f == NULL) {
-        log_write_int_err("logman_ERROR::Unable to create/open log file\n");
+        log_write_int_err("LOGMAN_ERROR::Unable to create/open log file\n");
         return LOGERR_LOGFILECREATE;
     }
     
@@ -121,11 +116,10 @@ log_static logman_error log_form_message_core(size_t start, const char* message,
     size_t mes_len = vsnprintf(&log_obj.message_buf[start], max_len, message, va);
     log_obj.message_buf[start + mes_len] = '\n';
     log_obj.message_buf[start + mes_len + 1] = '\0';
-    assert_len(mes_len, max_len);
+    if (mes_len >= max_len) {
+        return LOGERR_LOGBUFOVERFLOW;
+    }
     return LOGERR_NOERR;
-
-    err:
-    return LOGERR_LOGBUFOVERFLOW;   
 }
 
 log_static void log_form_debug_message(logman_level level, const char* file, const char* func, const int line, 
@@ -134,14 +128,16 @@ log_static void log_form_debug_message(logman_level level, const char* file, con
     log_date_update();
     size_t len = snprintf(log_obj.message_buf, MESSAGE_BUF_SIZE, "%s::%s::%s::%s::%i::",
                              log_obj.date_buf, level_tag[level], file, func, line);
-    assert_len(len, MESSAGE_BUF_SIZE);
+    if (len >= MESSAGE_BUF_SIZE) {
+        goto err;
+    }                             
 
     if (log_form_message_core(len, message, va) == LOGERR_NOERR) {
         return;
     }
 
     err:
-    log_write_int_err("logman_ERROR::Message buffer overflow\n");
+    log_write_int_err("LOGMAN_ERROR::Message buffer overflow\n");
 }
 
 log_static void log_form_product_message(logman_level level, const char* file, const char* func, const int line, 
@@ -153,14 +149,16 @@ log_static void log_form_product_message(logman_level level, const char* file, c
 
     log_date_update();
     size_t len = snprintf(log_obj.message_buf, MESSAGE_BUF_SIZE, "%s::%s::", log_obj.date_buf, level_tag[level]);
-    assert_len(len, MESSAGE_BUF_SIZE);
+    if (len >= MESSAGE_BUF_SIZE) {
+        goto err;
+    }   
 
     if (log_form_message_core(len, message, va) == LOGERR_NOERR) {
         return;
     }
 
     err:
-    log_write_int_err("logman_ERROR::Message buffer overflow\n");
+    log_write_int_err("LOGMAN_ERROR::Message buffer overflow\n");
 }
 
 logman_error log_init_default(void)
@@ -178,7 +176,7 @@ logman_error log_init(logman_settings* settings)
     if (settings == NULL) {
         logman_error err = log_init_default();
         if (err == LOGERR_NOERR) {
-            log_write_int_err("logman_WARNING::Empty settings, setting default\n");
+            log_write_int_err("LOGMAN_WARNING::Empty settings, setting default\n");
         }
         return err;
     }
@@ -197,7 +195,7 @@ logman_error log_init(logman_settings* settings)
             log_obj.message_former = log_form_product_message;
             break;
         default:
-            log_write_int_err("logman_ERROR::Unknown logman type\n");
+            log_write_int_err("LOGMAN_ERROR::Unknown logman type\n");
             return LOGERR_LOGUNKNOWNTYPE;
     }
     
@@ -216,7 +214,7 @@ logman_error log_init(logman_settings* settings)
             log_obj.out_type = LOGOUT_FILE;
             break;
         default:
-            log_write_int_err("logman_ERROR::Unknown logman output type\n");
+            log_write_int_err("LOGMAN_ERROR::Unknown logman output type\n");
             return LOGERR_LOGUNKNOWNOUTTYPE;
     }
     
@@ -227,7 +225,7 @@ void log_destruct(void)
 {
     if (log_obj.out_type == LOGOUT_FILE) {
         if (fclose(log_obj.out_stream) != 0) {
-            log_write_int_err("logman_ERROR::Unable to close log file\n");
+            log_write_int_err("LOGMAN_ERROR::Unable to close log file\n");
         }
     }
     
@@ -240,7 +238,7 @@ void log_destruct(void)
 void __log_log(logman_level level, const char* file, const char* func, const int line, const char* message, ...)
 {
     if (log_obj.message_buf == NULL) {
-        log_write_int_err("logman_ERROR::Message buffer uninitialized\n");
+        log_write_int_err("LOGMAN_ERROR::Message buffer uninitialized\n");
         return;
     }
 

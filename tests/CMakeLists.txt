@@ -17,13 +17,15 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-add_definitions(-DUTEST_BUILD=1)
+
 add_executable(
     logman_test
     logman_utest.cpp
     logman_mtest.cpp
     ${LOGMAN_SOURCES}
 )
+
+target_compile_definitions(logman_test PRIVATE UTEST_BUILD=1)
 
 target_link_libraries(
     logman_test
