@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22.1)
-project(LOGMAN 
+project(logman 
     VERSION 1.0.0
     DESCRIPTION "Logger for C/C++ projects"
     LANGUAGES C CXX)
@@ -24,7 +24,9 @@ else()
     set(LOGMAN_BUILD_SHARED_LIBRARY ${BUILD_SHARED_LIBS})
 endif()
 
-set(LOGMAN_SOURCES ${LOGMAN_SOURCE_DIR}/src/logman.c)
+set(LOGMAN_SOURCES ${PROJECT_SOURCE_DIR}/src/logman.c)
+
+message(PATHE: ${PROJECT_SOURCE_DIR})
 
 #--------------------------------------------------------------------
 # Add subdirectories
