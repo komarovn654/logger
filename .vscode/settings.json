@@ -66,6 +66,18 @@
         "vector": "cpp",
         "algorithm": "cpp",
         "execinfo.h": "c",
-        "stdarg.h": "c"
+        "stdarg.h": "c",
+        "format": "c",
+        "type_traits": "c",
+        "xhash": "c",
+        "xstring": "c",
+        "xtree": "c",
+        "xutility": "c",
+        "log_int.h": "c",
+        "logman_int.h": "c",
+        "winnt.h": "c",
+        "stdio.h": "c",
+        "windows.h": "c",
+        "dbghelp.h": "c"
     }
 }

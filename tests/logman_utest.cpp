@@ -1,40 +1,26 @@
 #include <gtest/gtest.h>
 
 extern "C" {
-    #include "logger.h"
+    #include "../src/logman_int.h"
 
-    extern struct logger_src {
-        logger_output out_type;
-        FILE* out_stream;
-
-        char* date_buf;
-        char* message_buf;
-        void* backtrace_buf;
-
-        char* err_message;
-        void (*error_callback)(void);
-
-        void (*writer)(char *buf);
-        void (*message_former)(logger_level level, const char* file, const char* func, const int line, 
-            const char* message, va_list va);
-    } log_obj;
-    extern logger_error log_buffers_init(void);
+    extern logman_src log_obj;
+    extern logman_error log_buffers_init(void);
     extern void log_write_std(char *buf);
     extern void log_write_file(char *buf);
     extern void log_error_callback_default(void);
-    extern void log_form_debug_message(logger_level level, const char* file, const char* func, const int line, 
+    extern void log_form_debug_message(logman_level level, const char* file, const char* func, const int line, 
         const char* message, va_list va);
     extern void log_date_update(void);
     extern void log_error_callback_default(void);
     extern void log_write_int_err(const char* message, ...);
-    extern logger_error log_set_out_file(const char* file_name);
-    extern void log_form_product_message(logger_level level, const char* file, const char* func, const int line, 
+    extern logman_error log_set_out_file(const char* file_name);
+    extern void log_form_product_message(logman_level level, const char* file, const char* func, const int line, 
         const char* message, va_list va);
 }
 
 const char* test_log_file = "log.txt";
 
-class TestLoggerFix : public ::testing::Test
+class TestLogmanFix : public ::testing::Test
 {
 protected:
     void SetUp()
@@ -48,46 +34,44 @@ protected:
     }
 };
 
-TEST_F(TestLoggerFix, InternalBuffersInit) 
+TEST_F(TestLogmanFix, InternalBuffersInit) 
 {
     ASSERT_EQ(log_buffers_init(), LOGERR_NOERR);
     EXPECT_TRUE(log_obj.date_buf != NULL);
     EXPECT_TRUE(log_obj.message_buf != NULL);
-    EXPECT_TRUE(log_obj.backtrace_buf != NULL);
     EXPECT_TRUE(log_obj.err_message != NULL);
 }
 
-TEST_F(TestLoggerFix, InternalBuffersDestruct) 
+TEST_F(TestLogmanFix, InternalBuffersDestruct) 
 {
     log_destruct();
     EXPECT_TRUE(log_obj.date_buf == NULL);
     EXPECT_TRUE(log_obj.message_buf == NULL);
-    EXPECT_TRUE(log_obj.backtrace_buf == NULL);
     EXPECT_TRUE(log_obj.err_message == NULL);
 }
 
-TEST_F(TestLoggerFix, GetInternalError) 
+TEST_F(TestLogmanFix, GetInternalError) 
 {
     std::snprintf(log_obj.err_message, 27, "there is an internal error");
     EXPECT_STREQ(log_get_internal_error(), "there is an internal error");
 }
 
-TEST_F(TestLoggerFix, WriteInternalError) 
+TEST_F(TestLogmanFix, WriteInternalError) 
 {
     const char expect[] = "there is an internal error 15";
     log_write_int_err("there is an internal error %d", 15);
     EXPECT_STREQ(log_obj.err_message, expect);
 }
 
-TEST(TestLogger, UpdateDateInitErr)
+TEST(TestLogman, UpdateDateInitErr)
 {
     log_obj.err_message = new(char[128]);
     log_date_update();
-    EXPECT_STREQ(log_get_internal_error(), "LOGGER_ERROR::Date buffer uninitialized\n");
+    EXPECT_STREQ(log_get_internal_error(), "LOGMAN_ERROR::Date buffer uninitialized\n");
     delete(log_obj.err_message);
 }
 
-TEST_F(TestLoggerFix, UpdateLogDate)
+TEST_F(TestLogmanFix, UpdateLogDate)
 {
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
@@ -98,7 +82,7 @@ TEST_F(TestLoggerFix, UpdateLogDate)
     EXPECT_STREQ(expect, log_obj.date_buf);
 }
 
-TEST_F(TestLoggerFix, WriteFile)
+TEST_F(TestLogmanFix, WriteFile)
 {
     const char test_string[] = "hello world!\n";
     char read_buf[32] = {0};
@@ -115,7 +99,7 @@ TEST_F(TestLoggerFix, WriteFile)
     remove(test_log_file);
 }
 
-TEST_F(TestLoggerFix, SetOutFile)
+TEST_F(TestLogmanFix, SetOutFile)
 {
     FILE * file;
     file = fopen(test_log_file, "r");
@@ -131,15 +115,7 @@ TEST_F(TestLoggerFix, SetOutFile)
     remove(test_log_file);
 }
 
-TEST_F(TestLoggerFix, RefreshBacktrace)
-{
-    char expect[LOG_BACKTRACE_BUF_SIZE] = { 0 };
-    memset(log_obj.backtrace_buf, 1, LOG_BACKTRACE_BUF_SIZE);
-    __log_refresh_backtrace_buf();
-    EXPECT_STREQ((char *)log_obj.backtrace_buf, expect);
-}
-
-TEST_F(TestLoggerFix, FormDebugMessage)
+TEST_F(TestLogmanFix, FormDebugMessage)
 {
     char expect[256];
     log_date_update();
@@ -151,17 +127,17 @@ TEST_F(TestLoggerFix, FormDebugMessage)
     EXPECT_STREQ(expect, log_obj.message_buf);
 }
 
-TEST_F(TestLoggerFix, FormDebugMessageErr)
+TEST_F(TestLogmanFix, FormDebugMessageErr)
 {
     char overflow[2049] = { 0 };
     memset(overflow, 1, 2049);
 
     va_list va;
     log_form_debug_message(LOGLEVEL_INFO, "file", "func", 3, overflow, va);
-    EXPECT_STREQ("LOGGER_ERROR::Message buffer overflow\n", log_obj.err_message);
+    EXPECT_STREQ("LOGMAN_ERROR::Message buffer overflow\n", log_obj.err_message);
 }
 
-TEST_F(TestLoggerFix, FormProductMessage)
+TEST_F(TestLogmanFix, FormProductMessage)
 {
     char expect[256];
     log_date_update();
@@ -172,17 +148,17 @@ TEST_F(TestLoggerFix, FormProductMessage)
     EXPECT_STREQ(expect, log_obj.message_buf);
 }
 
-TEST_F(TestLoggerFix, FormProductMessageErr)
+TEST_F(TestLogmanFix, FormProductMessageErr)
 {
     char overflow[2049] = { 0 };
     memset(overflow, 1, 2049);
 
     va_list va;
     log_form_product_message(LOGLEVEL_INFO, "file", "func", 3, overflow, va);
-    EXPECT_STREQ("LOGGER_ERROR::Message buffer overflow\n", log_obj.err_message);
+    EXPECT_STREQ("LOGMAN_ERROR::Message buffer overflow\n", log_obj.err_message);
 }
 
-TEST(TestLogger, InitDefautlLogger) 
+TEST(TestLogman, InitDefautlLogman) 
 {
     ASSERT_EQ(log_init_default(), LOGERR_NOERR);
     EXPECT_TRUE(log_obj.out_type == LOGOUT_STREAM);
@@ -193,7 +169,7 @@ TEST(TestLogger, InitDefautlLogger)
     log_destruct();
 }
 
-TEST(TestLogger, InitLoggerNoSettings) 
+TEST(TestLogman, InitLogmanNoSettings) 
 {
     ASSERT_EQ(log_init(NULL), LOGERR_NOERR);
     EXPECT_TRUE(log_obj.out_type == LOGOUT_STREAM);
@@ -201,50 +177,50 @@ TEST(TestLogger, InitLoggerNoSettings)
     EXPECT_TRUE(log_obj.writer == log_write_std);
     EXPECT_TRUE(log_obj.error_callback == log_error_callback_default);
     EXPECT_TRUE(log_obj.message_former == log_form_debug_message);
-    EXPECT_STREQ(log_get_internal_error(), "LOGGER_WARNING::Empty settings, setting default\n");
+    EXPECT_STREQ(log_get_internal_error(), "LOGMAN_WARNING::Empty settings, setting default\n");
     log_destruct();
 }
 
-TEST(TestLogger, InitLoggerErrType) 
+TEST(TestLogman, InitLogmanErrType) 
 {
-    logger_settings settings;
-    memset(&settings, 0, sizeof(logger_settings));
+    logman_settings settings;
+    memset(&settings, 0, sizeof(logman_settings));
     settings.out_type = LOGOUT_FILE;
     settings.output.file_name = test_log_file;
     
     ASSERT_EQ(log_init(&settings), LOGERR_LOGUNKNOWNTYPE);
-    EXPECT_STREQ(log_get_internal_error(), "LOGGER_ERROR::Unknown logger type\n");
+    EXPECT_STREQ(log_get_internal_error(), "LOGMAN_ERROR::Unknown logman type\n");
     log_destruct();
     remove(test_log_file);
 }
 
-TEST(TestLogger, InitLoggerErrOutputType) 
+TEST(TestLogman, InitLogmanErrOutputType) 
 {
-    logger_settings settings;
-    memset(&settings, 0, sizeof(logger_settings));
+    logman_settings settings;
+    memset(&settings, 0, sizeof(logman_settings));
     settings.type = LOGTYPE_DEBUG;
 
     ASSERT_EQ(log_init(&settings), LOGERR_LOGUNKNOWNOUTTYPE);
-    EXPECT_STREQ(log_get_internal_error(), "LOGGER_ERROR::Unknown logger output type\n");
+    EXPECT_STREQ(log_get_internal_error(), "LOGMAN_ERROR::Unknown logman output type\n");
     log_destruct();
 }
 
-TEST(TestLogger, InitLoggerErrFile) 
+TEST(TestLogman, InitLogmanErrFile) 
 {
-    logger_settings settings;
-    memset(&settings, 0, sizeof(logger_settings));
+    logman_settings settings;
+    memset(&settings, 0, sizeof(logman_settings));
     settings.type = LOGTYPE_DEBUG;
     settings.out_type = LOGOUT_FILE;
 
     ASSERT_EQ(log_init(&settings), LOGERR_LOGFILECREATE);
-    EXPECT_STREQ(log_get_internal_error(), "LOGGER_ERROR::Unable to create/open log file\n");
+    EXPECT_STREQ(log_get_internal_error(), "LOGMAN_ERROR::Unable to create/open log file\n");
     log_destruct();
 }
 
-TEST(TestLogger, InitLogger) 
+TEST(TestLogman, InitLogman) 
 {
-    logger_settings settings;
-    memset(&settings, 0, sizeof(logger_settings));
+    logman_settings settings;
+    memset(&settings, 0, sizeof(logman_settings));
     settings.type = LOGTYPE_DEBUG;
     settings.out_type = LOGOUT_FILE;
     settings.output.file_name = test_log_file;
@@ -255,7 +231,7 @@ TEST(TestLogger, InitLogger)
     remove(test_log_file);
 }
 
-TEST_F(TestLoggerFix, Log)
+TEST_F(TestLogmanFix, Log)
 {
     log_obj.message_former = log_form_debug_message; 
     log_obj.writer = log_write_file;
@@ -278,10 +254,10 @@ TEST_F(TestLoggerFix, Log)
     remove(test_log_file);
 }
 
-TEST(TestLogger, LogErr)
+TEST(TestLogman, LogErr)
 {
     log_obj.err_message = new(char[256]);
     __log_log(LOGLEVEL_INFO, "file", "func", 2, "message");
-    EXPECT_STREQ(log_get_internal_error(), "LOGGER_ERROR::Message buffer uninitialized\n");
+    EXPECT_STREQ(log_get_internal_error(), "LOGMAN_ERROR::Message buffer uninitialized\n");
     delete(log_obj.err_message);
 }

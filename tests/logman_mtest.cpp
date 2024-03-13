@@ -1,13 +1,13 @@
 #include <gtest/gtest.h>
 
 extern "C" {
-    #include "logger.h"
+    #include "../src/logman_int.h"
 }
 
-class LoggerTests : public ::testing::Test
+class LogmanTests : public ::testing::Test
 {
 public:
-    logger_error err;
+    logman_error err;
 protected:
     void SetUp()
     {
@@ -20,37 +20,37 @@ protected:
 
 const char *test_file = "log.txt";
 
-TEST_F(LoggerTests, DebugLogDebug)
+TEST_F(LogmanTests, DebugLogDebug)
 {
     ASSERT_EQ(log_init_default(), LOGERR_NOERR);
     log_debug("debug message");
     ASSERT_STREQ(log_get_internal_error(), "");
 }
 
-TEST_F(LoggerTests, InfoLogDebug)
+TEST_F(LogmanTests, InfoLogDebug)
 {
     ASSERT_EQ(log_init_default(), LOGERR_NOERR);
     log_info("info message");
     ASSERT_STREQ(log_get_internal_error(), "");
 }
 
-TEST_F(LoggerTests, WarningLogDebug)
+TEST_F(LogmanTests, WarningLogDebug)
 {
     ASSERT_EQ(log_init_default(), LOGERR_NOERR);
     log_warning("warning message");
     ASSERT_STREQ(log_get_internal_error(), "");
 }
 
-TEST_F(LoggerTests, ErrorLogDebug)
+TEST_F(LogmanTests, ErrorLogDebug)
 {
     ASSERT_EQ(log_init_default(), LOGERR_NOERR);
     log_error("error message");
     ASSERT_STREQ(log_get_internal_error(), "");
 }
 
-TEST_F(LoggerTests, InfoLogProduct)
+TEST_F(LogmanTests, InfoLogProduct)
 {
-    logger_settings settings;
+    logman_settings settings;
     settings.type = LOGTYPE_PRODUCT;
     settings.out_type = LOGOUT_FILE;
     settings.output.file_name = test_file;
@@ -68,9 +68,9 @@ TEST_F(LoggerTests, InfoLogProduct)
     ASSERT_STREQ(&buf[19], "::INFO::info message\n");
 }
 
-TEST_F(LoggerTests, WarningLogProduct)
+TEST_F(LogmanTests, WarningLogProduct)
 {
-    logger_settings settings;
+    logman_settings settings;
     settings.type = LOGTYPE_PRODUCT;
     settings.out_type = LOGOUT_FILE;
     settings.output.file_name = test_file;
@@ -88,9 +88,9 @@ TEST_F(LoggerTests, WarningLogProduct)
     ASSERT_STREQ(&buf[19], "::WARNING::warning message\n");
 }
 
-TEST_F(LoggerTests, ErrorLogProduct)
+TEST_F(LogmanTests, ErrorLogProduct)
 {
-    logger_settings settings;
+    logman_settings settings;
     settings.type = LOGTYPE_PRODUCT;
     settings.out_type = LOGOUT_FILE;
     settings.output.file_name = test_file;

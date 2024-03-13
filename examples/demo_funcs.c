@@ -1,5 +1,5 @@
 #include "demo_funcs.h"
-#include "logger.h"
+#include "../include/logman/logman.h"
 
 void ext_func_1(void)
 {

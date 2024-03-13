@@ -3,12 +3,12 @@ CMake is used to create native makefiles or other build projects. The following 
 ```bash
 mkdir build
 cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=/opt/logger # To install lib in /opt/logger. There is /usr/local/ by default.
+cmake .. -DCMAKE_INSTALL_PREFIX=/opt/logman # To install lib in /opt/logman. There is /usr/local/ by default.
 make
 ```
 # Install instructions
 ```bash
-cd build/logger/
+cd build/logman/
 sudo make install # Install in /usr/local/ by default.
 ```
 # Tests
