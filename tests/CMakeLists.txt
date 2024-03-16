@@ -11,12 +11,13 @@ FetchContent_Declare(
 )
 set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
 set(BUILD_GTEST ON CACHE BOOL "" FORCE)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
+
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+option(INSTALL_GTEST "Enable installation of googletest." OFF)
+
 FetchContent_MakeAvailable(googletest)
 
 enable_testing()
-
 
 add_executable(
     logman_test

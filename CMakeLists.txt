@@ -38,3 +38,12 @@ endif()
 if (LOGMAN_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
+
+#--------------------------------------------------------------------
+# Install files other than the library
+# The library is installed by src/CMakeLists.txt
+#--------------------------------------------------------------------
+if (LOGMAN_INSTALL AND NOT CMAKE_SKIP_INSTALL_RULES)
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/logman/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+            FILES_MATCHING PATTERN logman.h)
+endif()

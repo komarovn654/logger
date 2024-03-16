@@ -1,20 +1,21 @@
-message(TYPE ${LOGMAN_LIBRARY_TYPE})
 add_library(logman ${LOGMAN_LIBRARY_TYPE}
                  "${PROJECT_SOURCE_DIR}/include/logman/logman.h"
                  logman_int.h logman.c)
 
-if (UNIX AND LOGMAN_BUILD_SHARED_LIBRARY)
-    set(LOGMAN_LIB_NAME logman_sl)
-else()
-    set(LOGMAN_LIB_NAME logman)
-endif()
-set(LOGMAN_LIB_NAME_SUFFIX "")
-
 set_target_properties(logman PROPERTIES 
+                            OUTPUT_NAME logman
                             VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
                             SOVERSION ${PROJECT_VERSION_MAJOR}
+                            INSTALL_NAME_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
                             DEFINE_SYMBOL _LOGMAN_BUILD_DLL
                             FOLDER "logman")
+
+target_include_directories(logman PUBLIC
+                           "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
+                           "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
+target_include_directories(logman PRIVATE
+                           "${PROJECT_SOURCE_DIR}/src"
+                           "${PROJECT_BINARY_DIR}/src")
 
 if (LOGMAN_BUILD_SHARED_LIBRARY)
     if (WIN32)
@@ -72,7 +73,7 @@ if (LOGMAN_BUILD_SHARED_LIBRARY)
     endif()
 endif()
 
-if (LOGMAN_INSTALL)
+if (LOGMAN_INSTALL AND NOT CMAKE_SKIP_INSTALL_RULES)
     install(TARGETS logman
             RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
             ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
