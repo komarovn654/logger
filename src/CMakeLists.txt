@@ -1,6 +1,7 @@
 add_library(logman ${LOGMAN_LIBRARY_TYPE}
                  "${PROJECT_SOURCE_DIR}/include/logman/logman.h"
                  logman_int.h logman.c)
+# add_library(logman::logman ALIAS logman)
 
 set_target_properties(logman PROPERTIES 
                             OUTPUT_NAME logman
@@ -75,7 +76,9 @@ endif()
 
 if (LOGMAN_INSTALL AND NOT CMAKE_SKIP_INSTALL_RULES)
     install(TARGETS logman
+            EXPORT logmanTargets
             RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
             ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+            INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 endif()
