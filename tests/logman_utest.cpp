@@ -94,6 +94,7 @@ TEST_F(TestLogmanFix, WriteFile)
 
     f = fopen(test_log_file, "r");
     fread((void*)read_buf, sizeof(char), 32, f);
+    fclose(f);
     printf("%s\n", read_buf);
     EXPECT_STREQ(read_buf, test_string);
     remove(test_log_file);
@@ -101,8 +102,7 @@ TEST_F(TestLogmanFix, WriteFile)
 
 TEST_F(TestLogmanFix, SetOutFile)
 {
-    FILE * file;
-    file = fopen(test_log_file, "r");
+    FILE* file = fopen(test_log_file, "r");
     ASSERT_TRUE(file == NULL);
 
     EXPECT_EQ(log_set_out_file(test_log_file), LOGERR_NOERR);
@@ -249,6 +249,7 @@ TEST_F(TestLogmanFix, Log)
     memset(buf, 0, 256);
     FILE *f = fopen(test_log_file, "r");
     fread(buf, sizeof(char), len, f);
+    fclose(f);
 
     EXPECT_STREQ(expect, buf);
     remove(test_log_file);

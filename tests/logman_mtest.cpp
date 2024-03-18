@@ -4,6 +4,8 @@ extern "C" {
     #include "../src/logman_int.h"
 }
 
+const char *test_file = "log.txt";
+
 class LogmanTests : public ::testing::Test
 {
 public:
@@ -15,10 +17,10 @@ protected:
     void TearDown()
     {
         log_destruct();
+        
+        remove(test_file);
     }
 };
-
-const char *test_file = "log.txt";
 
 TEST_F(LogmanTests, DebugLogDebug)
 {
@@ -64,6 +66,7 @@ TEST_F(LogmanTests, InfoLogProduct)
     char buf[128];
     memset(buf, 0, 128);
     fread(buf, sizeof(char), 128, f);
+    fclose(f);
     // cut off the date
     ASSERT_STREQ(&buf[19], "::INFO::info message\n");
 }
@@ -84,6 +87,7 @@ TEST_F(LogmanTests, WarningLogProduct)
     char buf[128];
     memset(buf, 0, 128);
     fread(buf, sizeof(char), 128, f);
+    fclose(f);
     // cut off the date
     ASSERT_STREQ(&buf[19], "::WARNING::warning message\n");
 }
@@ -104,6 +108,7 @@ TEST_F(LogmanTests, ErrorLogProduct)
     char buf[128];
     memset(buf, 0, 128);
     fread(buf, sizeof(char), 42, f);
+    fclose(f);
     // cut off the date and callstack
     ASSERT_STREQ(&buf[19], "::ERROR::error message\n");
 }
